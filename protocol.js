@@ -1,7 +1,7 @@
 import { Buffer } from 'buffer';
-import crypto from 'node:crypto';
+import { sha256d } from './utils.js';
 
-const _protocolDataType = Object.freeze({
+export const PROTOCOL_DATA_TYPE = Object.freeze({
     int32: "int32",
     int64: "int34",
     uint8: "uint8",
@@ -15,17 +15,7 @@ const _protocolDataType = Object.freeze({
 
 //https://en.bitcoin.it/wiki/Protocol_documentation
 
-export const MESSAGE_VERSION = [
-    { name: "version", type: _protocolDataType.int32 },
-    { name: "services", type: _protocolDataType.uint64 },
-    { name: "timestamp", type: _protocolDataType.int64 },
-    { name: "addr_recv", type: _protocolDataType.net_addr_notime },
-    { name: "addr_from", type: _protocolDataType.net_addr_notime },
-    { name: "nonce", type: _protocolDataType.uint64 },
-    { name: "user_agent", type: _protocolDataType.var_str },
-    { name: "start_height", type: _protocolDataType.int32 },
-    { name: "relay", type: _protocolDataType.bool }
-];
+//todo fix the shitshow mishmash of BigInt and normal numbers
 
 export function Serialize(messageType, messageObj) {
     let buffers = [];
@@ -57,26 +47,26 @@ export function Serialize(messageType, messageObj) {
             throw new ProtocolMessageSerializationError(part.name);
 
         switch (part.type) {
-            case _protocolDataType.int32:
+            case PROTOCOL_DATA_TYPE.int32:
                 pushBuffer(4).writeInt32LE(data);
                 break;
-            case _protocolDataType.int64:
+            case PROTOCOL_DATA_TYPE.int64:
                 pushBuffer(8).writeBigInt64LE(BigInt(data));
                 break;
-            case _protocolDataType.uint64:
+            case PROTOCOL_DATA_TYPE.uint64:
                 pushBuffer(8).writeBigUInt64LE(BigInt(data));
                 break;
-            case _protocolDataType.var_int:
+            case PROTOCOL_DATA_TYPE.var_int:
                 pushVarIntBuffer(data);
                 break;
-            case _protocolDataType.var_str:
+            case PROTOCOL_DATA_TYPE.var_str:
                 pushVarIntBuffer(data.length);
                 buffers.push(Buffer.from(data, 'ascii'));
                 break;
-            case _protocolDataType.bool:
+            case PROTOCOL_DATA_TYPE.bool:
                 pushBuffer(1).writeUInt8(data ? 0x1 : 0x0);
                 break;
-            case _protocolDataType.net_addr_notime:
+            case PROTOCOL_DATA_TYPE.net_addr_notime:
                 const split = data.addr.split(".");
                 pushBuffer(8).writeBigUInt64LE(BigInt(data.services));
                 pushBuffer(10).fill(0);
@@ -88,30 +78,96 @@ export function Serialize(messageType, messageObj) {
                 pushBuffer(2).writeInt16BE(data.port);
                 break;
             default:
-                break;
+                throw new Error();
         }
     }
 
     return Buffer.concat(buffers);
 }
 
-export function Deserialize(messageType, messageBuffer) {
-    for (const part of messageType) {
-        switch (part.type) {
-            case _protocolDataType.int32:
-                //todo
-                break;
-            //...etc
-            default:
-                break;
+export function Deserialize(messageType, payload) {
+    let index = 0;
+    const obj = {};
+
+    function readVarInt() {
+        const data = payload.readUInt8(index);
+        index++;
+        if (data < 0xFD) {
+            return data;
+        } else if (data == 253) {
+            const out = payload.readUInt16LE(index);
+            index += 2;
+            return out;
+        } else if (data == 254) {
+            const out = payload.readUInt32LE(index);
+            index += 4;
+            return out;
+        } else {
+            const out = payload.readBigUInt64LE(index);
+            index += 8;
+            return out;
         }
     }
 
-    //return messageObj
+    for (const part of messageType) {
+        switch (part.type) {
+            case PROTOCOL_DATA_TYPE.int32:
+                obj[part.name] = payload.readUInt32LE(index);
+                index += 4;
+                break;
+            case PROTOCOL_DATA_TYPE.int64:
+                obj[part.name] = payload.readBigInt64LE(index);
+                index += 8;
+                break;
+            case PROTOCOL_DATA_TYPE.uint64:
+                obj[part.name] = payload.readBigUInt64LE(index);
+                index += 8;
+                break;
+            case PROTOCOL_DATA_TYPE.var_int:
+                obj[part.name] = readVarInt();
+                break;
+            case PROTOCOL_DATA_TYPE.var_str:
+                const strlen = readVarInt();
+                obj[part.name] = payload.slice(index, index + strlen).toString('ascii');
+                index += strlen;
+                break;
+            case PROTOCOL_DATA_TYPE.bool:
+                obj[part.name] = payload.readUInt8(index) === 0x0 ? false : true;
+                index += 1;
+                break;
+            case PROTOCOL_DATA_TYPE.net_addr_notime:
+                const addrObj = {};
+                addrObj.services = payload.readBigUInt64LE(index);
+                index += 8;
+                for (let i = 0; i < 10; i++) {
+                    if (payload.readUInt8(index++) != 0) throw new Error();
+                }
+                for (let i = 0; i < 2; i++) {
+                    index++;
+                    //if (payload.readUInt8(index++) != 0xFF) throw new Error();
+                }
+                const split = [];
+                for (let i = 0; i < 4; i++) {
+                    split.push(payload.readUInt8(index++));
+                }
+                addrObj.addr = split.join(".");
+                addrObj.port = payload.readInt16BE(index);
+                index += 2;
+                obj[part.name] = addrObj;
+                break;
+            default:
+                throw new Error();
+        }
+    }
+
+    return obj;
 }
 
+const MAGIC = 0xF9BEB4D9; //mainnet magic value
+
 export function SerializeMessage(command, payload) {
-    const magic = Buffer.from('F9BEB4D9', 'hex'); //mainnet magic value
+    const magic = Buffer.alloc(4);
+    magic.writeUInt32BE(MAGIC);
     const commandBuffer = Buffer.alloc(12);
     commandBuffer.write(command, 0, 'ascii');
     const lengthBuf = Buffer.alloc(4);
@@ -122,9 +178,32 @@ export function SerializeMessage(command, payload) {
     return message;
 }
 
-function sha256d(payload) {
-    return crypto.createHash('sha256').update(
-        crypto.createHash('sha256').update(payload).digest()).digest();
+export function DeserializeMessage(buffer) {
+    const magic = buffer.slice(0, 4);
+    if (magic.readUInt32BE() != MAGIC) {
+        console.log('Invalid magic, skipping.');
+        buffer = buffer.slice(1);
+        return { buffer };
+    }
+
+    const command = buffer.slice(4, 16).toString('ascii').replace(/\0+$/, '');
+    const length = buffer.readUInt32LE(16);
+    const checksum = buffer.slice(20, 24);
+
+    if (buffer.length < 24 + length) 
+        return { buffer }; //wait for full payload
+
+    const payload = buffer.slice(24, 24 + length);
+    const validChecksum = sha256d(payload).slice(0, 4);
+    if (!checksum.equals(validChecksum)) {
+        console.log('Checksum mismatch.');
+        buffer = buffer.slice(24 + length);
+        return { buffer };
+    }
+
+    buffer = buffer.slice(24 + length);
+
+    return { buffer, command, payload };
 }
 
 export class ProtocolMessageDeserializationError extends Error {
