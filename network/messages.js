@@ -4,10 +4,11 @@ import { Serialize, SerializeMessage, PROTOCOL_DATA_TYPE, DeserializeMessage, De
 export const PROTOCOL_MESSAGE_TYPE = Object.freeze({
     version: "version",
     verack: "verack",
+    alert: "alert",
 });
 
 const PROTOCOL_MESSAGE = Object.freeze({
-    version: [
+    version:[
                 { name: "version", type: PROTOCOL_DATA_TYPE.int32 },
                 { name: "services", type: PROTOCOL_DATA_TYPE.uint64 },
                 { name: "timestamp", type: PROTOCOL_DATA_TYPE.int64 },
@@ -19,6 +20,9 @@ const PROTOCOL_MESSAGE = Object.freeze({
                 { name: "relay", type: PROTOCOL_DATA_TYPE.bool }
             ],
     verack: [],
+    alert:  [
+                { name: "payload", type: PROTOCOL_DATA_TYPE.dump },
+            ]
 });
 
 export function Message(command, obj) {
@@ -38,10 +42,10 @@ export function DeMessage(buffer) {
     //we definitely should do this.
     if (!Object.keys(PROTOCOL_MESSAGE_TYPE).includes(command)) {
         console.log("Unknown command " + command);
-        throw new Error();
+    } else {
+        const obj = Deserialize(PROTOCOL_MESSAGE[command], payload);
+        return { buffer: newBuffer, command, obj };
     }
 
-    const obj = Deserialize(PROTOCOL_MESSAGE[command], payload);
-
-    return { buffer: newBuffer, command, obj };
+    return { buffer: newBuffer };
 }

@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { sha256d } from './utils.js';
+import { sha256d } from '../utils.js';
 
 export const PROTOCOL_DATA_TYPE = Object.freeze({
     int32: "int32",
@@ -9,7 +9,8 @@ export const PROTOCOL_DATA_TYPE = Object.freeze({
     net_addr_notime: "net_addr_notime",
     var_int: "var_int",
     var_str: "var_str",
-    bool: "bool"
+    bool: "bool",
+    dump: "dump",
     //...etc
 });
 
@@ -154,6 +155,10 @@ export function Deserialize(messageType, payload) {
                 addrObj.port = payload.readInt16BE(index);
                 index += 2;
                 obj[part.name] = addrObj;
+                break;
+            case PROTOCOL_DATA_TYPE.dump:
+                obj[part.name] = payload.toString('ascii');
+                index += payload.length;
                 break;
             default:
                 throw new Error();
