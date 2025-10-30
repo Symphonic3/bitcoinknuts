@@ -1,4 +1,4 @@
-import { initPeersAsync } from './network/peermanager.js';
+import { initPeersAsync } from './network/peer.js';
 
 async function bitcoin() {
     await initPeersAsync(1);
