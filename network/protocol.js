@@ -11,12 +11,11 @@ export const PROTOCOL_DATA_TYPE = Object.freeze({
     var_str: "var_str",
     bool: "bool",
     dump: "dump",
+    char32: "char32"
     //...etc
 });
 
 //https://en.bitcoin.it/wiki/Protocol_documentation
-
-//todo fix the shitshow mishmash of BigInt and normal numbers
 
 export function Serialize(messageType, messageObj) {
     let buffers = [];
@@ -38,7 +37,7 @@ export function Serialize(messageType, messageObj) {
             buffer.writeUInt32LE(data, buffer.writeUInt8(254));
         } else {
             const buffer = pushBuffer(9);
-            buffer.writeBigUInt64LE(BigInt(data), buffer.writeUInt8(255));
+            buffer.writeBigUInt64LE(data, buffer.writeUInt8(255));
         }
     }
 
@@ -52,10 +51,10 @@ export function Serialize(messageType, messageObj) {
                 pushBuffer(4).writeInt32LE(data);
                 break;
             case PROTOCOL_DATA_TYPE.int64:
-                pushBuffer(8).writeBigInt64LE(BigInt(data));
+                pushBuffer(8).writeBigInt64LE(data);
                 break;
             case PROTOCOL_DATA_TYPE.uint64:
-                pushBuffer(8).writeBigUInt64LE(BigInt(data));
+                pushBuffer(8).writeBigUInt64LE(data);
                 break;
             case PROTOCOL_DATA_TYPE.var_int:
                 pushVarIntBuffer(data);
@@ -64,12 +63,17 @@ export function Serialize(messageType, messageObj) {
                 pushVarIntBuffer(data.length);
                 buffers.push(Buffer.from(data, 'ascii'));
                 break;
+            case PROTOCOL_DATA_TYPE.char32:
+                if (data.length != 64)
+                    throw new Error();
+                buffers.push(Buffer.from(data, 'hex'));
+                break;
             case PROTOCOL_DATA_TYPE.bool:
                 pushBuffer(1).writeUInt8(data ? 0x1 : 0x0);
                 break;
             case PROTOCOL_DATA_TYPE.net_addr_notime:
                 const split = data.addr.split(".");
-                pushBuffer(8).writeBigUInt64LE(BigInt(data.services));
+                pushBuffer(8).writeBigUInt64LE(data.services);
                 pushBuffer(10).fill(0);
                 pushBuffer(2).fill(0xFF);
                 pushBuffer(1).writeInt8(parseInt(split[0]));
@@ -131,6 +135,10 @@ export function Deserialize(messageType, payload) {
                 const strlen = readVarInt();
                 obj[part.name] = payload.slice(index, index + strlen).toString('ascii');
                 index += strlen;
+                break;
+            case PROTOCOL_DATA_TYPE.char32:
+                obj[part.name] = payload.slice(index, index + 32).toString('hex');
+                index += 32;
                 break;
             case PROTOCOL_DATA_TYPE.bool:
                 obj[part.name] = payload.readUInt8(index) === 0x0 ? false : true;

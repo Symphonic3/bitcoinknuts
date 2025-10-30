@@ -85,10 +85,10 @@ class CommandHandler {
 
         const versionMessage = {
             version: 70012, //we don't like things that are complex
-            services: 0,
-            timestamp: Math.floor(Date.now()/1000),
-            addr_recv: { services: 0, addr: '0.0.0.0', port: 0 },
-            addr_from: { services: 0, addr: '0.0.0.0', port: 0 },
+            services: BigInt(0),
+            timestamp: BigInt(Math.floor(Date.now()/1000)),
+            addr_recv: { services: BigInt(0), addr: '0.0.0.0', port: 0 },
+            addr_from: { services: BigInt(0), addr: '0.0.0.0', port: 0 },
             nonce: crypto.randomBytes(8).readBigUInt64LE(),
             user_agent: '/Satoshi:28.1.0/',
             start_height: 0,
