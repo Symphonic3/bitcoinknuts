@@ -11,6 +11,16 @@ export async function initPeersAsync(count) {
     }
 }
 
+//todo implement random peer selection for such functions.
+//eventually we might try IBD from seperate peers simultaneously,
+//and so we will need a smarter management system.
+export function getFirstPeer(filter) {
+    for (const peerState of peers) {
+        if (filter(peerState))
+            return peerState;
+    }
+}
+
 async function notifyPeerDeathAsync(peer) {
     peers.delete(peer);
     peers.add(await newPeerAsync());
@@ -77,6 +87,10 @@ function timeoutFor(client, timeout) {
     }, timeout.length);
 }
 
+function nonceBigUInt64() {
+    return crypto.randomBytes(8).readBigUInt64LE()
+}
+
 async function openAsync(peerState) {
     peerState.verTimeout = timeoutFor(peerState.client, TIMEOUTS.version);
     peerState.verackTimeout = timeoutFor(peerState.client, TIMEOUTS.verack);
@@ -87,7 +101,7 @@ async function openAsync(peerState) {
         timestamp: BigInt(Math.floor(Date.now()/1000)),
         addr_recv: { services: BigInt(0), addr: '0.0.0.0', port: 0 },
         addr_from: { services: BigInt(0), addr: '0.0.0.0', port: 0 },
-        nonce: crypto.randomBytes(8).readBigUInt64LE(),
+        nonce: nonceBigUInt64(),
         user_agent: '/Satoshi:28.1.0/',
         start_height: 0,
         relay: false //i don't want txns
@@ -121,7 +135,14 @@ async function handleAsync(peerState, command, obj) {
 }
 
 function handleStandard(peerState, command, obj) {
-    return; //TODO handle other commands
+    switch (command) {
+        case PROTOCOL_MESSAGE_TYPE.ping:
+            //ping? pong!
+            peerState.client.write(Message(PROTOCOL_MESSAGE_TYPE.pong, { nonce: obj.nonce }));
+            break;
+        default:
+            break;
+    }
 }
 
 //messy state object to isolate side effects of mutability

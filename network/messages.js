@@ -5,24 +5,32 @@ export const PROTOCOL_MESSAGE_TYPE = Object.freeze({
     version: "version",
     verack: "verack",
     alert: "alert",
+    ping: "ping",
+    pong: "pong",
 });
 
 const PROTOCOL_MESSAGE = Object.freeze({
-    version:[
-                { name: "version", type: PROTOCOL_DATA_TYPE.int32 },
-                { name: "services", type: PROTOCOL_DATA_TYPE.uint64 },
-                { name: "timestamp", type: PROTOCOL_DATA_TYPE.int64 },
-                { name: "addr_recv", type: PROTOCOL_DATA_TYPE.net_addr_notime },
-                { name: "addr_from", type: PROTOCOL_DATA_TYPE.net_addr_notime },
-                { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 },
-                { name: "user_agent", type: PROTOCOL_DATA_TYPE.var_str },
-                { name: "start_height", type: PROTOCOL_DATA_TYPE.int32 },
-                { name: "relay", type: PROTOCOL_DATA_TYPE.bool }
-            ],
+    version: [
+        { name: "version", type: PROTOCOL_DATA_TYPE.int32 },
+        { name: "services", type: PROTOCOL_DATA_TYPE.uint64 },
+        { name: "timestamp", type: PROTOCOL_DATA_TYPE.int64 },
+        { name: "addr_recv", type: PROTOCOL_DATA_TYPE.net_addr_notime },
+        { name: "addr_from", type: PROTOCOL_DATA_TYPE.net_addr_notime },
+        { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 },
+        { name: "user_agent", type: PROTOCOL_DATA_TYPE.var_str },
+        { name: "start_height", type: PROTOCOL_DATA_TYPE.int32 },
+        { name: "relay", type: PROTOCOL_DATA_TYPE.bool }
+    ],
     verack: [],
-    alert:  [
-                { name: "payload", type: PROTOCOL_DATA_TYPE.dump },
-            ]
+    alert: [
+        { name: "payload", type: PROTOCOL_DATA_TYPE.dump },
+    ],
+    ping: [
+        { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 }
+    ],
+    pong: [
+        { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 }
+    ]
 });
 
 export function Message(command, obj) {
