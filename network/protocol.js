@@ -67,13 +67,13 @@ export function Serialize(messageType, messageObj) {
             case PROTOCOL_DATA_TYPE.char_array_32:
                 if (data.length != 64)
                     throw new Error();
-                buffers.push(Buffer.from(data, 'hex'));
+                buffers.push(Buffer.from(data, 'hex').reverse());
                 break;
             case PROTOCOL_DATA_TYPE.inv_vect_array_with_count:
                 pushVarIntBuffer(data.length);
                 for (let i = 0; i < data.length; i++) {
                     pushBuffer(4).writeUInt32LE(data[i].type);
-                    buffers.push(Buffer.from(data[i].hash, 'hex'));
+                    buffers.push(Buffer.from(data[i].hash, 'hex').reverse());
                 }
                 break;
             case PROTOCOL_DATA_TYPE.bool:
@@ -145,7 +145,7 @@ export function Deserialize(messageType, payload) {
                 index += strlen;
                 break;
             case PROTOCOL_DATA_TYPE.char_array_32:
-                obj[part.name] = payload.slice(index, index + 32).toString('hex');
+                obj[part.name] = Buffer.from(payload.slice(index, index + 32)).reverse().toString('hex');
                 index += 32;
                 break;
             case PROTOCOL_DATA_TYPE.inv_vect_array_with_count:
@@ -154,7 +154,7 @@ export function Deserialize(messageType, payload) {
                 for (let i = 0; i < count; i++) {
                     const type = payload.readUInt32LE(index);
                     index += 4;
-                    const hash = payload.slice(index, index + 32).toString('hex');
+                    const hash = Buffer.from(payload.slice(index, index + 32)).reverse().toString('hex');
                     index += 32;
                     invVectArray.push({ type, hash });
                 }

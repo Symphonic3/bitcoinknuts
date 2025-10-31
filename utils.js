@@ -29,5 +29,5 @@ export function hexDump(buffer) {
 }
 
 export function nonceBigUInt64() {
-    return crypto.randomBytes(8).readBigUInt64LE()
+    return crypto.randomBytes(8).readBigUInt64LE();
 }

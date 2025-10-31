@@ -1,7 +1,5 @@
 import { Message, PROTOCOL_MESSAGE_TYPE } from './network/messages.js';
 import { getFirstPeer, initPeersAsync } from './network/peer.js';
-import { nonceBigUInt64, hexDump } from './utils.js';
-
 async function bitcoin() {
     await initPeersAsync(1);
 }
@@ -22,8 +20,4 @@ const peer = await new Promise((resolve, reject) => {
     }, 100);
 });
 
-peer.client.write(Message(PROTOCOL_MESSAGE_TYPE.ping, { nonce: nonceBigUInt64() }));
-
 peer.client.write(Message(PROTOCOL_MESSAGE_TYPE.getdata, { inventory: [ { type: 2, hash: GENESIS_HASH } ] }));
-
-console.log(hexDump(Message(PROTOCOL_MESSAGE_TYPE.getdata, { inventory: [ { type: 2, hash: GENESIS_HASH } ] })));
