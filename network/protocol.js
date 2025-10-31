@@ -1,5 +1,5 @@
 import { Buffer } from 'buffer';
-import { sha256d } from '../utils.js';
+import { sha256d, hexDump } from '../utils.js';
 
 export const PROTOCOL_DATA_TYPE = Object.freeze({
     int32: "int32",
@@ -11,7 +11,8 @@ export const PROTOCOL_DATA_TYPE = Object.freeze({
     var_str: "var_str",
     bool: "bool",
     dump: "dump",
-    char32: "char32"
+    char_array_32: "char_array_32",
+    inv_vect_array_with_count: "inv_vect_array_with_count"
     //...etc
 });
 
@@ -63,10 +64,17 @@ export function Serialize(messageType, messageObj) {
                 pushVarIntBuffer(data.length);
                 buffers.push(Buffer.from(data, 'ascii'));
                 break;
-            case PROTOCOL_DATA_TYPE.char32:
+            case PROTOCOL_DATA_TYPE.char_array_32:
                 if (data.length != 64)
                     throw new Error();
                 buffers.push(Buffer.from(data, 'hex'));
+                break;
+            case PROTOCOL_DATA_TYPE.inv_vect_array_with_count:
+                pushVarIntBuffer(data.length);
+                for (let i = 0; i < data.length; i++) {
+                    pushBuffer(4).writeUInt32LE(data[i].type);
+                    buffers.push(Buffer.from(data[i].hash, 'hex'));
+                }
                 break;
             case PROTOCOL_DATA_TYPE.bool:
                 pushBuffer(1).writeUInt8(data ? 0x1 : 0x0);
@@ -117,7 +125,7 @@ export function Deserialize(messageType, payload) {
     for (const part of messageType) {
         switch (part.type) {
             case PROTOCOL_DATA_TYPE.int32:
-                obj[part.name] = payload.readUInt32LE(index);
+                obj[part.name] = payload.readInt32LE(index);
                 index += 4;
                 break;
             case PROTOCOL_DATA_TYPE.int64:
@@ -136,9 +144,21 @@ export function Deserialize(messageType, payload) {
                 obj[part.name] = payload.slice(index, index + strlen).toString('ascii');
                 index += strlen;
                 break;
-            case PROTOCOL_DATA_TYPE.char32:
+            case PROTOCOL_DATA_TYPE.char_array_32:
                 obj[part.name] = payload.slice(index, index + 32).toString('hex');
                 index += 32;
+                break;
+            case PROTOCOL_DATA_TYPE.inv_vect_array_with_count:
+                const count = readVarInt();
+                const invVectArray = [];
+                for (let i = 0; i < count; i++) {
+                    const type = payload.readUInt32LE(index);
+                    index += 4;
+                    const hash = payload.slice(index, index + 32).toString('hex');
+                    index += 32;
+                    invVectArray.push({ type, hash });
+                }
+                obj[part.name] = invVectArray;
                 break;
             case PROTOCOL_DATA_TYPE.bool:
                 obj[part.name] = payload.readUInt8(index) === 0x0 ? false : true;
@@ -165,7 +185,7 @@ export function Deserialize(messageType, payload) {
                 obj[part.name] = addrObj;
                 break;
             case PROTOCOL_DATA_TYPE.dump:
-                obj[part.name] = payload.toString('ascii');
+                obj[part.name] = hexDump(payload);
                 index += payload.length;
                 break;
             default:

@@ -1,4 +1,5 @@
 import { Message, DeMessage, PROTOCOL_MESSAGE_TYPE } from './messages.js';
+import { nonceBigUInt64 } from '../utils.js';
 import net from 'node:net';
 import crypto from "node:crypto";
 import { resolve4 } from 'dns/promises';
@@ -61,9 +62,7 @@ function connectIPv4(host, port) {
             buffer = newBuffer;
 
             if (command !== undefined) {
-                console.log(command + ":");
-                console.log(obj);
-
+                console.log(command + ".");
                 await handleAsync(peerState, command, obj);
             }
         }
@@ -85,10 +84,6 @@ function timeoutFor(client, timeout) {
         console.log("timing out...");
         client.destroySoon();
     }, timeout.length);
-}
-
-function nonceBigUInt64() {
-    return crypto.randomBytes(8).readBigUInt64LE()
 }
 
 async function openAsync(peerState) {
@@ -118,6 +113,7 @@ async function handleAsync(peerState, command, obj) {
             peerState.ver = true;
             clearTimeout(peerState.verTimeout);
             peerState.client.write(Message(PROTOCOL_MESSAGE_TYPE.verack));
+            console.log(obj);
             break;
         case PROTOCOL_MESSAGE_TYPE.verack:
             if (peerState.verack || peerState.verackTimeout === undefined)
@@ -139,6 +135,10 @@ function handleStandard(peerState, command, obj) {
         case PROTOCOL_MESSAGE_TYPE.ping:
             //ping? pong!
             peerState.client.write(Message(PROTOCOL_MESSAGE_TYPE.pong, { nonce: obj.nonce }));
+            break;
+        case PROTOCOL_MESSAGE_TYPE.alert:
+        case PROTOCOL_MESSAGE_TYPE.block:
+            console.log(obj.payload);
             break;
         default:
             break;

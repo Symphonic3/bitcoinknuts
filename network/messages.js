@@ -7,6 +7,8 @@ export const PROTOCOL_MESSAGE_TYPE = Object.freeze({
     alert: "alert",
     ping: "ping",
     pong: "pong",
+    getdata: "getdata",
+    block: "block"
 });
 
 const PROTOCOL_MESSAGE = Object.freeze({
@@ -25,11 +27,17 @@ const PROTOCOL_MESSAGE = Object.freeze({
     alert: [
         { name: "payload", type: PROTOCOL_DATA_TYPE.dump },
     ],
+    block: [
+        { name: "payload", type: PROTOCOL_DATA_TYPE.dump },
+    ],
     ping: [
         { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 }
     ],
     pong: [
         { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 }
+    ],
+    getdata: [
+        { name: "inventory", type: PROTOCOL_DATA_TYPE.inv_vect_array_with_count }
     ]
 });
 
