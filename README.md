@@ -3,3 +3,20 @@
 # bitcoinknuts
 
 A toy bitcoin node implemented in node.js
+
+# Roadmap
+
+- [x] Connect to peers
+- [x] Download genesis block
+- [ ] Automatic peer management, peerdb
+- [ ] IBD of headers
+- [ ] IBD of blocks
+- [ ] Verify blocks (All modern BIPs except taproot)
+- [ ] Pruning
+- [ ] Taproot support (?)
+- [ ] Build UTXO set
+- [ ] Web UI with useful node management/stats
+- [ ] Fully in-browser node using TOR Snowflake transport
+- [ ] Wallet functionality
+- [ ] Detailed TX and script editing for the wallet, based on Symphonic3/bitcointechwiki
+- [ ] Mempool/tx relay (?)
