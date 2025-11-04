@@ -9,7 +9,10 @@ export const PROTOCOL_MESSAGE_TYPE = Object.freeze({
     pong: "pong",
     getdata: "getdata",
     block: "block",
-    addr: "addr"
+    addr: "addr",
+    getaddr: "getaddr",
+    reject: "reject",
+    //TODO inv, notfound, getblocks, getheaders, tx, headers, sendheaders
 });
 
 const PROTOCOL_MESSAGE = Object.freeze({
@@ -42,6 +45,13 @@ const PROTOCOL_MESSAGE = Object.freeze({
     ],
     addr: [
         { name: "addr_list", type: PROTOCOL_DATA_TYPE.array_with_varint_count, item: PROTOCOL_DATA_TYPE.net_addr }
+    ],
+    getaddr: [],
+    reject: [
+        { name: "message", type: PROTOCOL_DATA_TYPE.var_str },
+        { name: "ccode", type: PROTOCOL_DATA_TYPE.uint8 },
+        { name: "reason", type: PROTOCOL_DATA_TYPE.var_str },
+        { name: "data", type: PROTOCOL_DATA_TYPE.char_array_32 }
     ]
 });
 

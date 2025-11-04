@@ -20,3 +20,5 @@ const peer = await new Promise((resolve, reject) => {
 });
 
 peer.client.write(Message(PROTOCOL_MESSAGE_TYPE.getdata, { inventory: [ { type: 2, hash: GENESIS_HASH } ] }));
+
+//see later https://en.bitcoin.it/wiki/Protocol_rules

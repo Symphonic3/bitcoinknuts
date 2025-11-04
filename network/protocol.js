@@ -5,7 +5,7 @@ import { sha256d, hexDump } from '../utils.js';
 export const PROTOCOL_DATA_TYPE = Object.freeze({
     int32: "int32",
     int64: "int34",
-    uint8: "uint8",
+    uint8: "uint8", //used interchangably with single char. not to be confused with char_array_32
     uint64: "uint64",
     net_addr_notime: "net_addr_notime",
     net_addr: "net_addr",

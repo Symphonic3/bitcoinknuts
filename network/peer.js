@@ -140,6 +140,10 @@ function handleStandard(peerState, command, obj) {
         case PROTOCOL_MESSAGE_TYPE.block:
             console.log(obj.payload);
             break;
+        case PROTOCOL_MESSAGE_TYPE.reject:
+            console.log("Peer rejected message: ");
+            console.log(obj);
+            break;
         default:
             break;
     }
