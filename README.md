@@ -21,6 +21,6 @@ A toy bitcoin node implemented in node.js
 
 # Scrapped ideas
 
-~~- Detailed TX and script editing for the wallet, based on Symphonic3/bitcointechwiki~~
-~~--Web UI with useful node management/stats~~
-~~- Fully in-browser node using TOR Snowflake transport (I have decided that this is out of scope, node-Tor is not able to do what I wanted without heavy modification)~~
+- ~~Detailed TX and script editing for the wallet, based on Symphonic3/bitcointechwiki~~
+- ~~Web UI with useful node management/stats~~
+- ~~Fully in-browser node using TOR Snowflake transport (I have decided that this is out of scope, node-Tor is not able to do what I wanted without heavy modification)~~
