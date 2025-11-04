@@ -8,7 +8,8 @@ export const PROTOCOL_MESSAGE_TYPE = Object.freeze({
     ping: "ping",
     pong: "pong",
     getdata: "getdata",
-    block: "block"
+    block: "block",
+    addr: "addr"
 });
 
 const PROTOCOL_MESSAGE = Object.freeze({
@@ -37,7 +38,10 @@ const PROTOCOL_MESSAGE = Object.freeze({
         { name: "nonce", type: PROTOCOL_DATA_TYPE.uint64 }
     ],
     getdata: [
-        { name: "inventory", type: PROTOCOL_DATA_TYPE.inv_vect_array_with_count }
+        { name: "inventory", type: PROTOCOL_DATA_TYPE.array_with_varint_count, item: PROTOCOL_DATA_TYPE.inv_vect }
+    ],
+    addr: [
+        { name: "addr_list", type: PROTOCOL_DATA_TYPE.array_with_varint_count, item: PROTOCOL_DATA_TYPE.net_addr }
     ]
 });
 
