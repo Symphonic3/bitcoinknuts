@@ -12,7 +12,7 @@ A toy bitcoin node implemented in node.js
 - [ ] IBD of headers
 - [ ] IBD of blocks
 - [ ] Verify blocks (All modern BIPs except taproot)
-- [ ] Pruning
+- [ ] Pruning (exponential backoff?)
 - [ ] Taproot support (?)
 - [ ] Build UTXO set
 - [ ] Wallet functionality
